@@ -54,6 +54,16 @@ local function createESP(player)
         if espEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
             local hrp = player.Character.HumanoidRootPart
             local humanoid = player.Character.Humanoid
+            if humanoid.Health <= 0 then
+                espBox.Visible = false
+                espLine.Visible = false
+                hpLine.Visible = false
+                for _, line in pairs(skeletonLines) do
+                    line.Visible = false
+                end
+                return
+            end
+
             local hrpPosition, onScreen = workspace.CurrentCamera:WorldToViewportPoint(hrp.Position)
 
             if onScreen then
