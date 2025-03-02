@@ -23,6 +23,33 @@ local function createESP(player)
     hpLine.Thickness = 1 -- Made thinner
     hpLine.Transparency = 1
 
+    local skeletonLines = {}
+    local bodyParts = {
+        {"Head", "UpperTorso"},
+        {"UpperTorso", "LowerTorso"},
+        {"UpperTorso", "LeftUpperArm"},
+        {"LeftUpperArm", "LeftLowerArm"},
+        {"LeftLowerArm", "LeftHand"},
+        {"UpperTorso", "RightUpperArm"},
+        {"RightUpperArm", "RightLowerArm"},
+        {"RightLowerArm", "RightHand"},
+        {"LowerTorso", "LeftUpperLeg"},
+        {"LeftUpperLeg", "LeftLowerLeg"},
+        {"LeftLowerLeg", "LeftFoot"},
+        {"LowerTorso", "RightUpperLeg"},
+        {"RightUpperLeg", "RightLowerLeg"},
+        {"RightLowerLeg", "RightFoot"}
+    }
+
+    for _, parts in ipairs(bodyParts) do
+        local line = Drawing.new("Line")
+        line.Visible = false
+        line.Color = Color3.new(1, 1, 1) -- Changed to white
+        line.Thickness = 1 -- Made thinner
+        line.Transparency = 1
+        skeletonLines[parts[1] .. parts[2]] = line
+    end
+
     RunService.RenderStepped:Connect(function()
         if espEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
             local hrp = player.Character.HumanoidRootPart
@@ -50,15 +77,37 @@ local function createESP(player)
                 hpLine.From = Vector2.new(hrpPosition.X - espBox.Size.X / 2 - 5, hrpPosition.Y + espBox.Size.Y / 2)
                 hpLine.To = Vector2.new(hrpPosition.X - espBox.Size.X / 2 - 5, hrpPosition.Y + espBox.Size.Y / 2 - (espBox.Size.Y * healthPercent))
                 hpLine.Visible = true
+
+                local function drawSkeletonLine(part1, part2)
+                    if player.Character:FindFirstChild(part1) and player.Character:FindFirstChild(part2) then
+                        local pos1 = workspace.CurrentCamera:WorldToViewportPoint(player.Character[part1].Position)
+                        local pos2 = workspace.CurrentCamera:WorldToViewportPoint(player.Character[part2].Position)
+                        skeletonLines[part1 .. part2].From = Vector2.new(pos1.X, pos1.Y)
+                        skeletonLines[part1 .. part2].To = Vector2.new(pos2.X, pos2.Y)
+                        skeletonLines[part1 .. part2].Visible = true
+                    else
+                        skeletonLines[part1 .. part2].Visible = false
+                    end
+                end
+
+                for _, parts in ipairs(bodyParts) do
+                    drawSkeletonLine(parts[1], parts[2])
+                end
             else
                 espBox.Visible = false
                 espLine.Visible = false
                 hpLine.Visible = false
+                for _, line in pairs(skeletonLines) do
+                    line.Visible = false
+                end
             end
         else
             espBox.Visible = false
             espLine.Visible = false
             hpLine.Visible = false
+            for _, line in pairs(skeletonLines) do
+                line.Visible = false
+            end
         end
     end)
 end
