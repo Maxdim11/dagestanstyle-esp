@@ -1,0 +1,87 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local localPlayer = Players.LocalPlayer
+
+local espEnabled = false
+
+local function createESP(player)
+    local espBox = Drawing.new("Square")
+    espBox.Visible = false
+    espBox.Color = Color3.new(1, 1, 1) -- Changed to white
+    espBox.Thickness = 1 -- Made thinner
+    espBox.Transparency = 1
+
+    local espLine = Drawing.new("Line")
+    espLine.Visible = false
+    espLine.Color = Color3.new(1, 1, 1) -- Changed to white
+    espLine.Thickness = 1 -- Made thinner
+    espLine.Transparency = 1
+
+    local hpLine = Drawing.new("Line")
+    hpLine.Visible = false
+    hpLine.Thickness = 1 -- Made thinner
+    hpLine.Transparency = 1
+
+    RunService.RenderStepped:Connect(function()
+        if espEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
+            local hrp = player.Character.HumanoidRootPart
+            local humanoid = player.Character.Humanoid
+            local hrpPosition, onScreen = workspace.CurrentCamera:WorldToViewportPoint(hrp.Position)
+
+            if onScreen then
+                espBox.Size = Vector2.new(2000 / hrpPosition.Z, 3000 / hrpPosition.Z)
+                espBox.Position = Vector2.new(hrpPosition.X - espBox.Size.X / 2, hrpPosition.Y - espBox.Size.Y / 2)
+                espBox.Visible = true
+
+                espLine.From = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
+                espLine.To = Vector2.new(hrpPosition.X, hrpPosition.Y)
+                espLine.Visible = true
+
+                local healthPercent = humanoid.Health / humanoid.MaxHealth
+                if healthPercent > 0.66 then
+                    hpLine.Color = Color3.new(0, 1, 0) -- Green
+                elseif healthPercent > 0.33 then
+                    hpLine.Color = Color3.new(1, 1, 0) -- Yellow
+                else
+                    hpLine.Color = Color3.new(1, 0, 0) -- Red
+                end
+
+                hpLine.From = Vector2.new(hrpPosition.X - espBox.Size.X / 2 - 5, hrpPosition.Y + espBox.Size.Y / 2)
+                hpLine.To = Vector2.new(hrpPosition.X - espBox.Size.X / 2 - 5, hrpPosition.Y + espBox.Size.Y / 2 - (espBox.Size.Y * healthPercent))
+                hpLine.Visible = true
+            else
+                espBox.Visible = false
+                espLine.Visible = false
+                hpLine.Visible = false
+            end
+        else
+            espBox.Visible = false
+            espLine.Visible = false
+            hpLine.Visible = false
+        end
+    end)
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= localPlayer then
+        createESP(player)
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    if player ~= localPlayer then
+        createESP(player)
+    end
+end)
+
+local function toggleESP()
+    espEnabled = not espEnabled
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Insert then
+        toggleESP()
+    end
+end)
